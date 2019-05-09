@@ -122,7 +122,7 @@ function handles = load_curr_container(handles)
     electrode_container = handles.electrode_containers(handles.curr_index);
     handles.curr_container = electrode_container.create_spike_container(handles.axis_loader);
     n_spikes = handles.curr_container.get_number_of_spikes();
-    n_sample_spikes = 1000; %% TODO set as param
+    n_sample_spikes = 1000;
     if n_spikes > n_sample_spikes 
         handles.sample_spikes = datasample(1:n_spikes, n_sample_spikes, 'Replace', false);
     else
@@ -278,7 +278,8 @@ function handles = set_n_clust(handles, n_clust)
 
 function handles = merge_clusters(handles, merging_clusters)
 %
-%   Merges clusters specified by user
+%   Merges clusters specified by user - useful when the automatic
+%   clustering appears inaccurate
 
     clust_nums = find(merging_clusters == 1); % Cluster numbers that are merging
     if ~isempty(clust_nums)
@@ -326,7 +327,6 @@ function handles = undo_merge(handles)
     end
 
 function print_details(handles)
-    %% TODO
     disp(handles.curr_container)
 
 function handles = flag_clusters(handles)
@@ -350,7 +350,6 @@ function handles = next_electrode(handles)
         disp_progress_msg(handles);
     else
         % this will overflow if all of the electrodes are empty
-        % fuck the police
         disp_skip_msg(handles);
         handles = next_electrode(handles);
     end
@@ -367,7 +366,6 @@ function handles = prev_electrode(handles)
         disp_progress_msg(handles);
     else
         % this will overflow if all of the electrodes are empty
-        % fuck the police
         disp_skip_msg(handles);
         handles = prev_electrode(handles);
     end
@@ -381,16 +379,12 @@ function handles = choose_electrode(handles)
             disp_progress_msg(handles);
         else
             % this will overflow if all of the electrodes are empty
-            % fuck the police
             disp_skip_msg(handles);
             handles = next_electrode(handles);
         end
     else
         disp('Invalid electrode.')
     end
-
-function [handles, keep_looping] = prompt_exit(handles)
-    %% TODO
 
 function handles = analysis_loop(handles)
     keep_looping = true;
@@ -448,8 +442,6 @@ function handles = analysis_loop(handles)
             case 's'
                 handles = update_curr_container(handles);
                 save_data(handles)
-            case ';'
-                [handles, keep_looping] = prompt_exit(handles);
             otherwise
                 disp(['Command: "', command, '" not recognized!'])
         end
