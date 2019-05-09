@@ -6,7 +6,7 @@ function generate_spike_frequency_table(mat_path, output_path, varargin)
 %
 % OPTIONS
 %
-% bin_size - size of the time bin (in seconds) to use when counting spikes. default = 60 seconds
+% bin_size - size of the time bin (in seconds) to use when counting spikes. default = 300 seconds
 
 % anon fcn to test for files
 is_file = @(fp) exist(fp, 'file');
@@ -14,7 +14,7 @@ is_file = @(fp) exist(fp, 'file');
 parser = inputParser();
 parser.addRequired('mat_path', is_file);
 parser.addRequired('output_path');
-parser.addParameter('bin_size', 60, @isnumeric);
+parser.addParameter('bin_size', 300, @isnumeric);
 parser.parse(mat_path, output_path, varargin{:});
 
 mat_data = load( ...
@@ -29,8 +29,6 @@ bin_size = parser.Results.bin_size;
 electrode_containers = mat_data.electrode_containers;
 final_spike_time = mat_data.final_spike_time;
 recording_start_time = min(mat_data.stim_times);
-%recording_start_time = mat_data.recording_start_time;
-%recording_start_time = min(recording_start_time);
 
 % only work with the containers that actually have data
 containers_with_data = electrode_containers([electrode_containers(:).contains_data]);
@@ -57,7 +55,6 @@ for curr_container = containers_with_data(:)'
     end
 end
 
-%save('backup_mat_2.mat', 'frequency_mat', 'unit_names');
 % Make sure there are no duplicate units
 [unique_units, ia] = unique(unit_names);
 if length(unique_units) ~= length(unit_names)
@@ -75,13 +72,3 @@ if isfield(mat_data, 'stim_times')
     stim_times = table(mat_data.stim_times', second(mat_data.stim_times)', 'VariableNames', {'date_time', 'seconds'});
     writetable(stim_times, 'stim_times.csv');
 end
-
-%% if encounter duplicate unit name issue:
-% Put breakpoint at 61: spike_table = array2table...
-%unique_units = unique(unit_names);
-%[unique_units, ia, ic] = unique(unit_names);
-%fm2 = frequency_mat(:, ia);
-%frequency_mat = fm2;
-%unit_names = unique_units;
-% Continue to save table.
-% 

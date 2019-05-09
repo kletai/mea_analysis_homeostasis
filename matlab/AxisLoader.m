@@ -25,7 +25,7 @@ classdef AxisLoader < handle
             obj.channels = obj.file_objs{1}.DataSets.ChannelArray.Channels;
             obj.channel_ind = 0;
             obj.num_channels = numel(obj.channels);
-            obj.recording_start_time = [];%datetime('3000-10-06 00:00:00'); % hbd
+            obj.recording_start_time = [];
             for i = 1:numel(obj.file_objs)
                 file_start_time = spike_time_to_datetime(obj.file_objs{i}.DataSets.Header.FileStartTime);
                 obj.recording_start_time = [obj.recording_start_time, file_start_time];

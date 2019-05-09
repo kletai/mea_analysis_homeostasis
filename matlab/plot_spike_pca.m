@@ -39,9 +39,8 @@ figure
 plot(center(1)*coeff(1, :) + center(2)*coeff(2, :) + center(3)*coeff(3, :))
 
 
-% Fit a GMM
+% K-means clustering
 k = 5
-%gmm = fitgmdist(score(:, 1:3), 3)
 [cluster_inds, cluster_mus] = kmeans(score(:, 1:3), k);
 figure
 for i = 1:k

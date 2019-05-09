@@ -23,7 +23,7 @@ classdef ElectrodeContainer < handle
             % PARAMETERS
             %
             % spike_index - contains the [well_row, well_col, electrode_col, electrode_row] index 
-            %   corresponding to the electrode that the  ElectrodeContainer stores data for (TODO - rename this to electrode_index)
+            %   corresponding to the electrode that the  ElectrodeContainer stores data for
             %
             % spike_times - contains the timing of each spike (as a matlab datetime object) that occured on the electrode
             %
