@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from matplotlib import mlab as mlab
 import random
 from datetime import datetime, timedelta
-from pymea import supplement_to_plotting as psupp
+from pymea import filter_supplement as psupp
 import math
 
 def smooth(A, kernel_size=5, mode='same'):
