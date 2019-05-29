@@ -54,6 +54,103 @@ def filter_unit_columns(predicate, unit_table):
     for column_name in unit_column_names:
         yield unit_table[column_name]
 
+def foldInductionPlusMean(cat_table, drug_time, condition, title, var=10, minHz = 0.001, maxHz = 100, ind_filter = True, ymax = 10, plotFolds = True, foldMin = 0.001, y_scale = 'linear', data_col ='spike_freq', data_col_mm = 'folds', plot_group = 0, FR_gradient = True, norm_by_mean = pd.Series([]), norm_by_median = pd.Series([]), plot_wells=True):
+    '''
+    Combine stim and ctrl fxns
+    '''
+    mean = False
+    median = False
+    baseline_table = cat_table.query('time < @drug_time')
+    stim_table = cat_table.query('time >= @drug_time')
+    if ind_filter:
+        filtered_units, mean, median, time_vector = foldInductionPlusMean_stim(cat_table, baseline_table, stim_table, condition, title, var, minHz, maxHz, ymax, plotFolds, foldMin, y_scale, data_col, data_col_mm, plot_group, FR_gradient, norm_by_mean, norm_by_median, plot_wells)
+    else:
+        filtered_units, mean, median, time_vector = foldInductionPlusMean_ctrl(cat_table, baseline_table, stim_table, condition, title, var, minHz, maxHz, ymax, plotFolds, foldMin, y_scale, data_col, data_col_mm, plot_group, FR_gradient, norm_by_mean, norm_by_median, plot_wells)
+        
+    return filtered_units, mean, median, time_vector
+
+
+def foldInductionPlusMean_stim(cat_table, baseline_table, stim_table, condition, title, var, minHz, maxHz, ymax, plotFolds, foldMin, y_scale, data_col, data_col_mm, plot_group, FR_gradient, norm_by_mean, norm_by_median, plot_wells):
+    """
+    This function plots baseline-normalized plots for a given condition that include both all of the channels passing filters   and the mean(black)+median(red) of those channels--use for PTX-stimulated samples b/c filters out units that don't increase FR with stim
+    """
+    c = cat_table.query('condition == "%s"'%condition)
+    b = baseline_table.query('condition == "%s"'%condition)
+    s = stim_table.query('condition == "%s"'%condition)
+    t_start = min(s['time'])
+    
+    c_filter, b_filter, count_real, count_live, cf = psupp.filter_neurons_homeostasis(c, b, s, ind_filter=True, var=var, minHz=minHz, maxHz=maxHz, foldMin=foldMin, data_col=data_col)
+    
+    if c_filter.empty:
+        print "No valid units for condition",condition
+        print('respond to drug: 0')
+        print('stay alive: ' + str(count_live))
+        print('real: ' + str(count_real))
+        print('condition: ' + str(len(c['unit_name'].unique())))
+        return
+
+    mean_freq_traces, mean_freq_traces_b, median_freq_traces, median_freq_traces_b, u_color = get_mean_med_traces(c_filter, data_col_mm, b_filter, FR_gradient)
+        
+    meanOfMean, meanOfMedian, time_vector_m = make_fold_plot(c_filter, t_start, u_color, FR_gradient, plotFolds, norm_by_median, norm_by_mean, mean_freq_traces_b, median_freq_traces_b, mean_freq_traces, median_freq_traces, y_scale, data_col, data_col_mm, title, ymax)
+    
+    #plot individual well plots
+    if plot_wells == True:
+        for w in c_filter['well'].unique():
+            plt.figure()
+            well_c = c_filter.query('well == @w')
+            well_b = b_filter.query('well == @w')
+            well_mft, well_mftb, well_mdft, well_mdftb, well_color = get_mean_med_traces(well_c, data_col_mm, well_b, FR_gradient)
+            well_title = 'Well ' + str(w)
+            make_fold_plot(well_c, t_start, well_color, FR_gradient, plotFolds, norm_by_median, norm_by_mean, well_mftb, well_mdftb, well_mft, well_mdft, y_scale, data_col, data_col_mm, well_title, ymax)          
+
+    print('respond to drug: ' + str(len(c_filter['unit_name'].unique())))
+    print('stay alive: ' + str(count_live))
+    print('real: ' + str(count_real))
+    print('condition: ' + str(len(c['unit_name'].unique())))    
+    
+    return (c_filter['unit_name'].unique(), mean_freq_traces[data_col_mm]/meanOfMean, median_freq_traces[data_col_mm]/meanOfMedian, time_vector_m)
+
+
+def foldInductionPlusMean_ctrl(cat_table, baseline_table, stim_table, condition, title, var, minHz, maxHz, ymax, plotFolds, foldMin, y_scale, data_col, data_col_mm, plot_group, FR_gradient, norm_by_mean, norm_by_median, plot_wells):
+    '''
+    This function plots baseline-normalized plots for a given condition that include both all of the channels passing filters and the mean(black)+median(red) of those channels--use for DMSO-stimulated samples
+    '''
+    c = cat_table.query('condition == "%s"'%condition)
+    b = baseline_table.query('condition == "%s"'%condition)
+    s = stim_table.query('condition == "%s"'%condition)
+    t_start = min(s['time'])
+
+    c_filter, b_filter, count_real, count_live, count_final = psupp.filter_neurons_homeostasis(c, b, s, ind_filter=False, var=var, minHz=minHz, maxHz=maxHz, foldMin=foldMin, data_col = data_col)
+    
+    if c_filter.empty:
+        print "No valid units for condition",condition
+        print('stay alive: ' + str(count_live))
+        print('real: ' + str(count_real))
+        print('condition: ' + str(len(c['unit_name'].unique())))
+        return (0,0,0)
+    
+    mean_freq_traces, mean_freq_traces_b, median_freq_traces, median_freq_traces_b, u_color = get_mean_med_traces(c_filter, data_col_mm, b_filter, FR_gradient)
+        
+    meanOfMean, meanOfMedian, time_vector_m = make_fold_plot(c_filter, t_start, u_color, FR_gradient, plotFolds, norm_by_median, norm_by_mean, mean_freq_traces_b, median_freq_traces_b, mean_freq_traces, median_freq_traces, y_scale, data_col, data_col_mm, title, ymax)
+    
+    #plot individual well plots
+    if plot_wells == True:
+        for w in c_filter['well'].unique():
+            plt.figure()
+            well_c = c_filter.query('well == @w')
+            well_b = b_filter.query('well == @w')
+            well_mft, well_mftb, well_mdft, well_mdftb, well_color = get_mean_med_traces(well_c, data_col_mm, well_b, FR_gradient)
+            well_title = 'Well ' + str(w)
+            make_fold_plot(well_c, t_start, well_color, FR_gradient, plotFolds, norm_by_median, norm_by_mean, well_mftb, well_mdftb, well_mft, well_mdft, y_scale, data_col, data_col_mm, well_title, ymax)
+    
+    print('stay alive: ' + str(count_live))
+    print('real: ' + str(count_real))
+    print('condition: ' + str(len(c['unit_name'].unique())))
+    
+    plt.show()
+
+    return (c_filter['unit_name'].unique(), mean_freq_traces[data_col_mm]/meanOfMean, median_freq_traces[data_col_mm]/meanOfMedian, time_vector_m)
+
 def get_mean_med_traces(c_filter, data_col, b_filter, FR_gradient):
     """
     Calculates and returns the mean and median spike trace for the units in c_filter.
@@ -137,98 +234,3 @@ def make_fold_plot(c_filter, t_start, u_color, FR_gradient, plotFolds, norm_by_m
     plt.show()
     return(meanOfMean, meanOfMedian, time_vector_m)
 
-def foldInductionPlusMean_stim(cat_table, baseline_table, stim_table, condition, title, var, minHz, maxHz, ymax, plotFolds, foldMin, y_scale, filter_wells, data_col, data_col_mm, plot_group, FR_gradient, norm_by_mean, norm_by_median, plot_wells):
-    """
-    This function plots baseline-normalized plots for a given condition that include both all of the channels passing filters   and the mean(black)+median(red) of those channels--use for PTX-stimulated samples b/c filters out units that don't increase FR with stim
-    """
-    c = cat_table.query('condition == "%s"'%condition)
-    b = baseline_table.query('condition == "%s"'%condition)
-    s = stim_table.query('condition == "%s"'%condition)
-    t_start = min(s['time'])
-    
-    c_filter, b_filter, count_real, count_live, cf = psupp.filter_neurons_homeostasis(c, b, s, ind_filter=True, var=var, minHz=minHz, maxHz=maxHz, foldMin=foldMin, filter_wells=filter_wells, data_col=data_col)
-    
-    if c_filter.empty:
-        print "No valid units for condition",condition
-        print('respond to drug: 0')
-        print('stay alive: ' + str(count_live))
-        print('real: ' + str(count_real))
-        print('condition: ' + str(len(c['unit_name'].unique())))
-        return
-
-    mean_freq_traces, mean_freq_traces_b, median_freq_traces, median_freq_traces_b, u_color = get_mean_med_traces(c_filter, data_col_mm, b_filter, FR_gradient)
-        
-    meanOfMean, meanOfMedian, time_vector_m = make_fold_plot(c_filter, t_start, u_color, FR_gradient, plotFolds, norm_by_median, norm_by_mean, mean_freq_traces_b, median_freq_traces_b, mean_freq_traces, median_freq_traces, y_scale, data_col, data_col_mm, title, ymax)
-    
-    #plot individual well plots
-    if plot_wells == True:
-        for w in c_filter['well'].unique():
-            plt.figure()
-            well_c = c_filter.query('well == @w')
-            well_b = b_filter.query('well == @w')
-            well_mft, well_mftb, well_mdft, well_mdftb, well_color = get_mean_med_traces(well_c, data_col_mm, well_b, FR_gradient)
-            well_title = 'Well ' + str(w)
-            make_fold_plot(well_c, t_start, well_color, FR_gradient, plotFolds, norm_by_median, norm_by_mean, well_mftb, well_mdftb, well_mft, well_mdft, y_scale, data_col, data_col_mm, well_title, ymax)          
-
-    print('respond to drug: ' + str(len(c_filter['unit_name'].unique())))
-    print('stay alive: ' + str(count_live))
-    print('real: ' + str(count_real))
-    print('condition: ' + str(len(c['unit_name'].unique())))    
-    
-    return (c_filter['unit_name'].unique(), mean_freq_traces[data_col_mm]/meanOfMean, median_freq_traces[data_col_mm]/meanOfMedian, time_vector_m)
-
-
-def foldInductionPlusMean_ctrl(cat_table, baseline_table, stim_table, condition, title, var, minHz, maxHz, ymax, plotFolds, foldMin, y_scale, filter_wells, data_col, data_col_mm, plot_group, FR_gradient, norm_by_mean, norm_by_median, plot_wells):
-    '''
-    This function plots baseline-normalized plots for a given condition that include both all of the channels passing filters and the mean(black)+median(red) of those channels--use for DMSO-stimulated samples
-    '''
-    c = cat_table.query('condition == "%s"'%condition)
-    b = baseline_table.query('condition == "%s"'%condition)
-    s = stim_table.query('condition == "%s"'%condition)
-    t_start = min(s['time'])
-
-    c_filter, b_filter, count_real, count_live, count_final = psupp.filter_neurons_homeostasis(c, b, s, ind_filter=False, var=var, minHz=minHz, maxHz=maxHz, foldMin=foldMin, filter_wells=False, data_col = data_col)
-    
-    if c_filter.empty:
-        print "No valid units for condition",condition
-        print('stay alive: ' + str(count_live))
-        print('real: ' + str(count_real))
-        print('condition: ' + str(len(c['unit_name'].unique())))
-        return (0,0,0)
-    
-    mean_freq_traces, mean_freq_traces_b, median_freq_traces, median_freq_traces_b, u_color = get_mean_med_traces(c_filter, data_col_mm, b_filter, FR_gradient)
-        
-    meanOfMean, meanOfMedian, time_vector_m = make_fold_plot(c_filter, t_start, u_color, FR_gradient, plotFolds, norm_by_median, norm_by_mean, mean_freq_traces_b, median_freq_traces_b, mean_freq_traces, median_freq_traces, y_scale, data_col, data_col_mm, title, ymax)
-    
-    #plot individual well plots
-    if plot_wells == True:
-        for w in c_filter['well'].unique():
-            plt.figure()
-            well_c = c_filter.query('well == @w')
-            well_b = b_filter.query('well == @w')
-            well_mft, well_mftb, well_mdft, well_mdftb, well_color = get_mean_med_traces(well_c, data_col_mm, well_b, FR_gradient)
-            well_title = 'Well ' + str(w)
-            make_fold_plot(well_c, t_start, well_color, FR_gradient, plotFolds, norm_by_median, norm_by_mean, well_mftb, well_mdftb, well_mft, well_mdft, y_scale, data_col, data_col_mm, well_title, ymax)
-    
-    print('stay alive: ' + str(count_live))
-    print('real: ' + str(count_real))
-    print('condition: ' + str(len(c['unit_name'].unique())))
-    
-    plt.show()
-
-    return (c_filter['unit_name'].unique(), mean_freq_traces[data_col_mm]/meanOfMean, median_freq_traces[data_col_mm]/meanOfMedian, time_vector_m)
-
-def foldInductionPlusMean(cat_table, drug_time, condition, title, var=10, minHz = 0.001, maxHz = 100, ind_filter = True, ymax = 10, plotFolds = True, foldMin = 0.001, y_scale = 'linear', filter_wells = False, data_col ='spike_freq', data_col_mm = 'folds', plot_group = 0, FR_gradient = True, norm_by_mean = pd.Series([]), norm_by_median = pd.Series([]), plot_wells=True):
-    '''
-    Combine stim and ctrl fxns
-    '''
-    mean = False
-    median = False
-    baseline_table = cat_table.query('time < @drug_time')
-    stim_table = cat_table.query('time >= @drug_time')
-    if ind_filter:
-        filtered_units, mean, median, time_vector = foldInductionPlusMean_stim(cat_table, baseline_table, stim_table, condition, title, var, minHz, maxHz, ymax, plotFolds, foldMin, y_scale, filter_wells, data_col, data_col_mm, plot_group, FR_gradient, norm_by_mean, norm_by_median, plot_wells)
-    else:
-        filtered_units, mean, median, time_vector = foldInductionPlusMean_ctrl(cat_table, baseline_table, stim_table, condition, title, var, minHz, maxHz, ymax, plotFolds, foldMin, y_scale, filter_wells, data_col, data_col_mm, plot_group, FR_gradient, norm_by_mean, norm_by_median, plot_wells)
-        
-    return filtered_units, mean, median, time_vector

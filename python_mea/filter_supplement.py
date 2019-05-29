@@ -8,7 +8,7 @@ from matplotlib import mlab as mlab
 import random
 from datetime import datetime, timedelta
 
-def filter_neurons_homeostasis(cat_table, baseline_table, stim_table, ind_filter = True, var=10, minHz = 0.001, maxHz = 100000, foldMin = 0.001, filter_wells = False, data_col = 'spike_freq'):
+def filter_neurons_homeostasis(cat_table, baseline_table, stim_table, ind_filter = True, var=10, minHz = 0.001, maxHz = 100000, foldMin = 0.001, data_col = 'spike_freq'):
     '''
     Returns a cat_table only including neurons that pass the filters for min/maxHz, baseline "var", staying alive
     throughout the experiment, and responding to drug.
@@ -59,7 +59,7 @@ def filter_neurons_homeostasis(cat_table, baseline_table, stim_table, ind_filter
         if c_filter_cond.empty:
             return (c_filter, b_filter, count_real, count_live, count_final)
     
-        #filter out wells that have fewer than two neurons, or whose median doesn't increase by at least 1.3
+        #filter out wells that have fewer than three neurons, or whose median doesn't increase by at least 1.3
         for w in c_filter_cond['well'].unique():
             s_well = s_filter_cond.query('well == @w')
             num_units = len(s_well['unit_name'].unique())
