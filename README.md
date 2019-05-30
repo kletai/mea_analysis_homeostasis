@@ -22,6 +22,7 @@ This will create a `mea_analysis_homeostasis` directory in your current director
 ```
 git pull origin master
 ```
+Important Note: In order to run the MATLAB code in this pipeline, you will also need the "Axion MATLAB Files" package distributed by Axion Biosystems with their AxIS software.
 
 Installing the python_mea module
 ---------------------------
@@ -127,7 +128,7 @@ Here is an index of what's in the module:
 
 ### filter_and_plot.py
 `smooth` - Applies a moving average to an array. Useful for smoothing spike frequency traces\
-`construct_categorized_dataframe` - Creates a dataframe that includes category information for unit spike timecourses. Uses `filter_unit_columns` as a supporting function. See [this tutorial](https://github.com/kletai/mea_analysis_homeostasis/blob/master/jupyter_notebooks/Python_mea%20Tutorial.ipynb) for examples of how you can use this function\
+`construct_categorized_dataframe` - Creates a dataframe that includes category information for unit spike timecourses. Uses `filter_unit_columns` as a supporting function.\
 `foldInductionPlusMean` - This function plots baseline-normalized plots for a given condition that include both all of the channels passing a filters and all the mean(black)+median(red) of those channels. Uses `foldInductionPlusMean_stim`, `foldInductionPlusMean_ctrl`, `get_mean_med_traces`, and `make_fold_plot`as supporting functions
  - Supporting functions for `foldInductionPlusMean`
 
