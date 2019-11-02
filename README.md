@@ -1,5 +1,5 @@
 # mea_analysis_homeostasis
-Code for analyzing MEA data in the Gray Lab neuronal firing rate homeostasis assay
+Code for analyzing MEA data in the Gray Lab neuronal firing rate homeostasis assay. Python code written for python 2.7. Matlab pre-processing was run on O2 through Harvard Medical School Research Computing. Code written by Kate Letai, Sam Rendall, and Kelsey Tyssowski.
 
 1.[Installing](#downloading-and-installing-the-code)
   * [Python_mea](#installing-the-python_mea-module)
@@ -126,11 +126,11 @@ Here is an index of what's in the module:
 `get_electrode_number` - Returns the electrode number corresponding to the unit specified by unit_name. "A111" is electrode 1, "A121" is electrode 2, "A112" is electrode 5, "B111" is electrode 17, "A211" is electrode 97, etc.\
 `get_ele_row_col_number_tuple` - Returns the row and column of an electrode corresponding to a given unit.\
 
-### filter_and_plot.py
+### plotting.py
 `smooth` - Applies a moving average to an array. Useful for smoothing spike frequency traces\
 `construct_categorized_dataframe` - Creates a dataframe that includes category information for unit spike timecourses. Uses `filter_unit_columns` as a supporting function.\
 `foldInductionPlusMean` - This function plots baseline-normalized plots for a given condition that include both all of the channels passing a filters and all the mean(black)+median(red) of those channels. Uses `foldInductionPlusMean_stim`, `foldInductionPlusMean_ctrl`, `get_mean_med_traces`, and `make_fold_plot`as supporting functions
  - Supporting functions for `foldInductionPlusMean`
 
-### filter_supplement.py
+### supplement_to_plotting.py
 `filter_neurons_homeostasis` - Returns a category dataframe only including neurons that pass the specified filters. Filters first based on baseline firing rate, choosing only neurons whose mean firing rate remains within 0.001-100,000 Hz (default) and who are not silent for more than 8 hours during the experiment. If "ind_filter" is true, neurons are eliminated if their firing rate does not increase upon PTX stimulation. Finally, entire wells are removed if there are fewer than three neurons, or if the median firing rate does not increase by at least 1.3 fold after PTX stimulation.
