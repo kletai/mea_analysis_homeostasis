@@ -10,6 +10,7 @@ Code for analyzing MEA data in the Gray Lab neuronal firing rate homeostasis ass
 3.[Data Visualization](#visualizing-cluster-data)
   * [Exporting Matlab Data to CSV Format](#generating-spike-frequency-traces)
   * [Plotting Data With Python](#python_mea)
+  * [Plotting Data with R](#r-functions-used-for-publication)
 
 Downloading and Installing the Code
 ===================================
@@ -134,3 +135,7 @@ Here is an index of what's in the module:
 
 ### supplement_to_plotting.py
 `filter_neurons_homeostasis` - Returns a category dataframe only including neurons that pass the specified filters. Filters first based on baseline firing rate, choosing only neurons whose mean firing rate remains within 0.001-100,000 Hz (default) and who are not silent for more than 8 hours during the experiment. If "ind_filter" is true, neurons are eliminated if their firing rate does not increase upon PTX stimulation. Finally, entire wells are removed if there are fewer than three neurons, or if the median firing rate does not increase by at least 1.3 fold after PTX stimulation.
+
+R functions used for publication
+-----
+`plotting_for_publication.R` - Contains R functions used to generate plots that are in the publication.
